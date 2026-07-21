@@ -143,20 +143,27 @@ All run inside the pyhidra process via Ghidra's `EmulatorHelper` — no GDB/LLDB
 | `export_signature_map` | Build a complete `{hash → name}` map for every function in the current binary. Save this JSON to reuse across versions. |
 | `apply_signature_map` | Pass a previously exported signature map; the server sweeps the binary and renames every matching function automatically. |
 
-**Typical workflow — patch diff across versions:**
+### Persistent signature stash (server-side cache)
+
+| Tool | Description |
+|---|---|
+| `save_active_binary_signature` | Fingerprint all functions and stash the map under a `lineage_group_id` (e.g. `"my_firmware_v1"`). Stored in `~/.ghidra_headless_mcp/signatures/` — no JSON files to manage. |
+| `auto_restore_signatures_from_stash` | Load a stashed map by `lineage_group_id` and auto-rename every matching function. |
+| `auto_stash_current_binary` | **Zero-input auto-stash** — hashes the binary's first 4 KB, saves a map under that hash. Just analyze and call. |
+| `auto_restore_current_binary` | **Zero-input auto-restore** — hashes the binary, looks up a previous stash, renames matches. No group ID needed. |
+| `list_stashed_signature_groups` | List all stashed groups currently in the local cache. |
+
+**Workflow — fully automated persistence:**
 
 ```python
-# 1. Analyze old binary and export its signature map
+# Analyze v1 — stashes automatically under binary content hash
 s1 = analyze_binary(binary_path="/bin/v1.bin")
-old_map = export_signature_map(session_id=s1.session_id)
+auto_stash_current_binary(session_id=s1.session_id)
 
-# 2. Analyze new binary and apply the map
+# Later, analyze v2 — restores automatically
 s2 = analyze_binary(binary_path="/bin/v2.bin")
-result = apply_signature_map(
-    signature_json_map=old_map["signature_map"],
-    session_id=s2.session_id,
-)
-# result.matched = 142  — 142 functions renamed automatically
+auto_restore_current_binary(session_id=s2.session_id)
+# → 142 functions renamed, zero manual JSON handling
 ```
 
 ## Project Structure

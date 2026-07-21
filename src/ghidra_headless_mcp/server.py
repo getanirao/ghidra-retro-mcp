@@ -350,6 +350,52 @@ TOOLS = [
             "required": ["signature_json_map"],
         },
     ),
+    # ── Persistent signature stash (server-side cache) ──────────────
+    types.Tool(
+        name="save_active_binary_signature",
+        description="Fingerprint all functions and stash the signature map server-side under a lineage_group_id (e.g. 'my_firmware_v1'). No JSON management needed.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "lineage_group_id": {"type": "string", "description": "Arbitrary group name for this binary family"},
+                "session_id": {"type": "string"},
+            },
+            "required": ["lineage_group_id"],
+        },
+    ),
+    types.Tool(
+        name="auto_restore_signatures_from_stash",
+        description="Load a previously stashed signature map by lineage_group_id and auto-rename every matching function in the current session.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "lineage_group_id": {"type": "string", "description": "Group name used during save"},
+                "session_id": {"type": "string"},
+            },
+            "required": ["lineage_group_id"],
+        },
+    ),
+    types.Tool(
+        name="auto_stash_current_binary",
+        description="Auto-stash: hash the loaded binary's first 4 KB, save a signature map under that hash. Zero user input needed.",
+        inputSchema={
+            "type": "object",
+            "properties": {"session_id": {"type": "string"}},
+        },
+    ),
+    types.Tool(
+        name="auto_restore_current_binary",
+        description="Auto-restore: hash the loaded binary, look up a previously stashed map by hash, and rename matches automatically.",
+        inputSchema={
+            "type": "object",
+            "properties": {"session_id": {"type": "string"}},
+        },
+    ),
+    types.Tool(
+        name="list_stashed_signature_groups",
+        description="List all stashed signature groups currently in the local server cache (~/.ghidra_headless_mcp/signatures/).",
+        inputSchema={"type": "object", "properties": {}},
+    ),
 ]
 
 
@@ -516,6 +562,18 @@ def _dispatch(name: str, args: dict):
         return session.export_signature_map(session_id=sid)
     if name == "apply_signature_map":
         return session.apply_signature_map(args["signature_json_map"], session_id=sid)
+
+    # Persistent signature stash
+    if name == "save_active_binary_signature":
+        return session.save_active_binary_signature(args["lineage_group_id"], session_id=sid)
+    if name == "auto_restore_signatures_from_stash":
+        return session.auto_restore_signatures_from_stash(args["lineage_group_id"], session_id=sid)
+    if name == "auto_stash_current_binary":
+        return session.auto_stash_current_binary(session_id=sid)
+    if name == "auto_restore_current_binary":
+        return session.auto_restore_current_binary(session_id=sid)
+    if name == "list_stashed_signature_groups":
+        return session.list_stashed_signature_groups()
 
     raise ValueError(f"Unknown tool: {name}")
 

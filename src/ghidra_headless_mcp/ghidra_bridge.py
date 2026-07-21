@@ -799,6 +799,45 @@ class GhidraSession:
             "matched": count,
         }
 
+    # ── Persistent signature cache (server-side stash) ────────────────
+
+    def save_active_binary_signature(
+        self, lineage_group_id: str, session_id: Optional[str] = None
+    ) -> dict:
+        from .tools.persistent_signatures import save_signature_stash
+
+        info = self._require_session(session_id)
+        return save_signature_stash(info.program, lineage_group_id)
+
+    def auto_restore_signatures_from_stash(
+        self, lineage_group_id: str, session_id: Optional[str] = None
+    ) -> dict:
+        from .tools.persistent_signatures import restore_signature_stash
+
+        info = self._require_session(session_id)
+        return restore_signature_stash(info.program, lineage_group_id)
+
+    def auto_stash_current_binary(
+        self, session_id: Optional[str] = None
+    ) -> dict:
+        from .tools.persistent_signatures import auto_stash_current_binary as _auto_stash
+
+        info = self._require_session(session_id)
+        return _auto_stash(info.program)
+
+    def auto_restore_current_binary(
+        self, session_id: Optional[str] = None
+    ) -> dict:
+        from .tools.persistent_signatures import auto_restore_current_binary as _auto_restore
+
+        info = self._require_session(session_id)
+        return _auto_restore(info.program)
+
+    def list_stashed_signature_groups(self) -> list[dict]:
+        from .tools.persistent_signatures import list_stashed_groups
+
+        return list_stashed_groups()
+
 
 # ── Helpers ─────────────────────────────────────────────────────────────
 
