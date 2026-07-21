@@ -166,7 +166,7 @@ auto_restore_current_binary(session_id=s2.session_id)
 # → 142 functions renamed, zero manual JSON handling
 ```
 
-## Hardware & Retro Ecosystem Integration (Nintendo Suites)
+## Hardware & Retro Ecosystem Integration
 
 `ghidra-retro-mcp` includes native out-of-the-box support for retro-reversing automation pipelines. The server container bundles pre-compiled execution dependencies for:
 
@@ -175,20 +175,24 @@ auto_restore_current_binary(session_id=s2.session_id)
 - **Game Boy Advance (GBA)** via `gba-ghidra-loader`
 - **Nintendo DS (NDS)** via `NTRGhidra`
 - **Nintendo Switch** via `ghidra-switch-loader`
+- **PlayStation 1 (PSX)** via `ghidra_psx_ldr`
+- **Sega Genesis / Mega Drive** via native 68000 memory maps
+- **Sega Master System / Game Gear** via `Ghidra-SegaMasterSystem-Loader`
+- **Sega Dreamcast** via native SuperH4 memory maps
 
 ### Execution Chaining Flow (Zero-Input Triage)
 
 Instead of forcing your AI agent to spend cycles manually identifying architecture maps, register layouts, or memory segments, chain the automated ingestion pipeline:
 
-1. Invoke `triage_and_load_nintendo_rom` with a target file path.
-2. The server headlessly parses the binary file structure (`NES\x1a`, `NTR`, `NSO0`, `GBA`, SNES title vectors), binds the matching Ghidra language module (`6502:LE:16`, `ARM:LE:32:v4t`, `AARCH64:LE:64`, `65816:LE:24`), loads standard address memory blocks, and links automated signature cache arrays.
+1. Invoke `triage_and_load_retro_rom` with a target file path.
+2. The server headlessly parses the binary file structure (`NES\x1a`, `NTR`, `NSO0`, `GBA`, SNES title vectors, `PS-X EXE`, `SEGA`, `TMR SEGA`, `SEGA ENTERPRISES`), binds the matching Ghidra language module (`6502:LE:16`, `ARM:LE:32:v4t`, `AARCH64:LE:64`, `65816:LE:24`, `MIPS:LE:32`, `68000:BE:32`, `Z80:16`, `SuperH4:LE:32`), loads standard address memory blocks, and links automated signature cache arrays.
 3. Use the integrated `emulate_slice` or `emulate_slice_with_taint` tools to analyze localized console loops — no physical console hardware or open GDB networking ports needed.
 
 ### Triage Tool
 
 | Tool | Description |
 |---|---|
-| `triage_and_load_nintendo_rom` | Reads raw file magic bytes to detect NES, SNES, GBA, NDS, or Switch ROMs. Provisions a correctly-language-mapped Ghidra session and auto-restores cached function signatures. Returns platform, loader, architecture tag, and mapped memory blocks. |
+| `triage_and_load_retro_rom` | Reads raw file magic bytes to detect NES, SNES, GBA, NDS, Switch, PSX, Genesis, SMS, or Dreamcast ROMs. Provisions a correctly-language-mapped Ghidra session and auto-restores cached function signatures. Returns platform, loader, architecture tag, and mapped memory blocks. |
 
 ## Project Structure
 

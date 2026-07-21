@@ -16,7 +16,7 @@ RUN wget -q "$GHIDRA_URL" -O ghidra.zip \
 ENV GHIDRA_INSTALL_DIR=/opt/ghidra
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
-# ── Nintendo extension loaders ──────────────────────────────────────────
+# ── Third-party retro console extension loaders ────────────────────────
 RUN mkdir -p /opt/ghidra/Ghidra/Extensions
 
 # gba-ghidra-loader — pre-built .gpa for GBA ROM parsing
@@ -33,6 +33,18 @@ RUN wget -q "https://github.com/Adubbz/Ghidra-Switch-Loader/releases/latest/down
 
 # GhidraNes — NES iNES loader (requires Gradle build if no release asset;
 #             install manually from https://github.com/kylewlacy/GhidraNes)
+
+# ghidra_psx_ldr — PlayStation 1 (PSX) executable loader
+RUN wget -q "https://github.com/lab313ru/ghidra_psx_ldr/releases/latest/download/ghidra_psx_ldr.zip" \
+    -O /opt/ghidra/Ghidra/Extensions/ghidra_psx_ldr.zip || true
+
+# Ghidra-SegaMasterSystem-Loader — SMS / Game Gear support
+RUN wget -q "https://github.com/VGKintsugi/Ghidra-SegaMasterSystem-Loader/releases/latest/download/Ghidra-SegaMasterSystem-Loader.zip" \
+    -O /opt/ghidra/Ghidra/Extensions/Ghidra-SegaMasterSystem-Loader.zip || true
+
+# Ghidra-SegaSaturn-Loader — Saturn dual-SH2 workspace engine
+RUN wget -q "https://github.com/VGKintsugi/Ghidra-SegaSaturn-Loader/releases/latest/download/Ghidra-SegaSaturn-Loader.zip" \
+    -O /opt/ghidra/Ghidra/Extensions/Ghidra-SegaSaturn-Loader.zip || true
 
 WORKDIR /app
 COPY pyproject.toml README.md ./

@@ -838,21 +838,21 @@ class GhidraSession:
 
         return list_stashed_groups()
 
-    # ── Nintendo ROM triage & load ───────────────────────────────────────
+    # ── Retro platform triage & load ─────────────────────────────────────
 
-    def triage_and_load_nintendo_rom(
+    def triage_and_load_retro_rom(
         self,
         rom_path: str,
         session_id: Optional[str] = None,
         project_dir: Optional[str] = None,
     ) -> dict:
-        from .tools.console_triage import detect_nintendo_platform
+        from .tools.retro_triage import detect_retro_platform
 
         rom_path = Path(rom_path).resolve()
         if not rom_path.exists():
             raise FileNotFoundError(f"Binary not found: {rom_path}")
 
-        platform_name, lang_id, loader_name = detect_nintendo_platform(str(rom_path))
+        platform_name, lang_id, loader_name = detect_retro_platform(str(rom_path))
 
         sid = session_id or self._make_session_id()
         if sid in self._sessions:

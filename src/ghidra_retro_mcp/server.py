@@ -396,10 +396,10 @@ TOOLS = [
         description="List all stashed signature groups currently in the local server cache (~/.ghidra_retro_mcp/signatures/).",
         inputSchema={"type": "object", "properties": {}},
     ),
-    # ── Nintendo ROM triage ─────────────────────────────────────────────
+    # ── Retro platform triage ───────────────────────────────────────────
     types.Tool(
-        name="triage_and_load_nintendo_rom",
-        description="Examines raw file magic header signatures to detect specific Nintendo console architectures (NES, SNES, GBA, NDS, Switch), headlessly maps correct language loaders, hooks multi-session project bindings, and applies automated signature caching overlays.",
+        name="triage_and_load_retro_rom",
+        description="Examines raw file magic header signatures to detect retro console architectures (NES, SNES, GBA, NDS, Switch, PSX, Genesis, SMS, Dreamcast), headlessly maps correct language loaders, hooks multi-session project bindings, and applies automated signature caching overlays.",
         inputSchema={
             "type": "object",
             "properties": {
@@ -589,9 +589,9 @@ def _dispatch(name: str, args: dict):
     if name == "list_stashed_signature_groups":
         return session.list_stashed_signature_groups()
 
-    # Nintendo ROM triage
-    if name == "triage_and_load_nintendo_rom":
-        return session.triage_and_load_nintendo_rom(
+    # Retro platform triage
+    if name == "triage_and_load_retro_rom":
+        return session.triage_and_load_retro_rom(
             rom_path=args["rom_path"],
             session_id=args.get("session_id"),
             project_dir=args.get("project_dir"),
