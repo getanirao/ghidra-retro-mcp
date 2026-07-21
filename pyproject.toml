@@ -1,0 +1,16 @@
+[project]
+name = "ghidra-headless-mcp"
+version = "0.1.0"
+description = "MCP server for Ghidra headless analysis via pyhidra"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "pyhidra>=2.0.0",
+    "typing-extensions>=4.0.0",
+]
+
+[project.scripts]
+ghidra-mcp = "ghidra_headless_mcp.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
