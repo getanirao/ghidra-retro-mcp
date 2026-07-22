@@ -40,7 +40,11 @@ def build_workspace_report(program) -> str:
             pass
 
     # ── Entry-point summary ──────────────────────────────────────────
-    entry_addrs = list(program.getExecutableEntrySet())
+    entry_addrs = []
+    from ghidra.program.model.symbol import SymbolType
+    it = sym_table.getSymbols(SymbolType.ENTRY_POINT)
+    while it.hasNext():
+        entry_addrs.append(it.next().getAddress())
     entry_lines = []
     for ea in entry_addrs:
         func = fm.getFunctionAt(ea)
