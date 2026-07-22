@@ -164,7 +164,7 @@ class GhidraSession:
                 binary_path=str(binary_path),
                 project_location=str(project_dir),
                 project_name=project_name,
-                analyze=True,
+                analyze=False,
             )
             flat_api = cm.__enter__()
         finally:
@@ -173,7 +173,7 @@ class GhidraSession:
 
         info = SessionInfo(
             session_id=sid,
-            launcher=gen,
+            launcher=cm,
             program=program,
             flat_api=flat_api,
             binary_path=str(binary_path),
@@ -907,7 +907,7 @@ class GhidraSession:
             binary_path=str(rom_path),
             project_location=str(project_dir),
             project_name=project_name,
-            analyze=True,
+            analyze=False,
         )
         if lang_id != "Auto-Detect":
             kwargs["language"] = lang_id
