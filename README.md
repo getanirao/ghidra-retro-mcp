@@ -217,4 +217,4 @@ ghidra-retro-mcp/
 4. Write tools apply changes directly to the Ghidra program database
 5. Sessions persist until explicitly closed — enabling multi-binary workflows and diffing
 
-<!-- mcp-name: ghidra-retro-mcp -->
+<!-- mcp-name: io.github.getanirao/ghidra-retro-mcp -->
