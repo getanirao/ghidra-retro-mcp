@@ -194,6 +194,47 @@ Instead of forcing your AI agent to spend cycles manually identifying architectu
 |---|---|
 | `triage_and_load_retro_rom` | Reads raw file magic bytes to detect NES, SNES, GBA, NDS, Switch, PSX, Genesis, SMS, or Dreamcast ROMs. Provisions a correctly-language-mapped Ghidra session and auto-restores cached function signatures. Returns platform, loader, architecture tag, and mapped memory blocks. |
 
+## Demo
+
+![Claude Desktop requesting a GBA ROM triage and getting a decompiled function back](assets/demo-claude-triage.png)
+
+*Claude Desktop: "Decompile the entry point of this GBA ROM and trace r0 propagation" — the server auto-detects the ARMv4t language, provisions a session, and returns decompiled C + taint trace.*
+
+![Terminal output showing triage_and_load_retro_rom detecting a PSX EXE](assets/demo-terminal-triage.png)
+
+*Console output from `triage_and_load_retro_rom` detecting a PlayStation 1 executable (`PS-X EXE` magic), mapping MIPS:LE:32, and auto-restoring cached signatures.*
+
+### Quick test
+
+```bash
+# Install
+pip install ghidra-retro-mcp
+# Requires Ghidra 11.2 + pyhidra; see Quick Start above.
+
+# Start the server (stdio — pipe to an MCP client)
+ghidra-retro-mcp
+```
+
+Configure Claude Desktop:
+
+```json
+{
+  "mcpServers": {
+    "ghidra-retro": {
+      "command": "ghidra-retro-mcp",
+      "args": ["--ghidra-dir", "C:\\path\\to\\ghidra"],
+      "env": {}
+    }
+  }
+}
+```
+
+Then ask Claude:
+- *"Load this GBA ROM and decompile the entry point."*
+- *"What functions call 0x8001234 in this NDS binary?"*
+- *"Triage this PSX EXE and trace r0 through the first 20 instructions."*
+- *"Diff the two sessions I have open and show me changed functions."*
+
 ## Project Structure
 
 ```
