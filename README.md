@@ -216,3 +216,5 @@ ghidra-retro-mcp/
 3. Read/write tools route to the requested session via `session_id` (or the active default)
 4. Write tools apply changes directly to the Ghidra program database
 5. Sessions persist until explicitly closed — enabling multi-binary workflows and diffing
+
+<!-- mcp-name: ghidra-retro-mcp -->

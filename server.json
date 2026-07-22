@@ -1,0 +1,52 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "ghidra-retro-mcp",
+  "version": "1.0.0",
+  "description": "A secure, headless Model Context Protocol (MCP) server for automated retro-reversing and bare-metal firmware analysis. Features in-process P-code micro-emulation and multi-generation console ROM auto-triage via PyGhidra.",
+  "author": "getanirao",
+  "license": "Apache-2.0",
+  "repository": {
+    "url": "https://github.com/getanirao/ghidra-retro-mcp",
+    "type": "git"
+  },
+  "keywords": [
+    "ghidra",
+    "reverse-engineering",
+    "mcp",
+    "model-context-protocol",
+    "retro-reversing",
+    "p-code",
+    "emulation",
+    "firmware",
+    "security-tools",
+    "pyhidra",
+    "rom-triage"
+  ],
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "ghidra-retro-mcp",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "GHIDRA_INSTALL_DIR",
+          "description": "Absolute path to the Ghidra installation directory",
+          "isRequired": true,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "MOCK_MODE",
+          "description": "Set to 1 for zero-dependency CI simulation",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string",
+          "default": "0"
+        }
+      ]
+    }
+  ]
+}

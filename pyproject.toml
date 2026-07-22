@@ -1,14 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "ghidra-retro-mcp"
-version = "0.1.0"
-description = "MCP server for Ghidra headless analysis via pyhidra"
-license = "Apache-2.0"
+version = "1.0.0"
+description = "A secure, headless Model Context Protocol (MCP) server for automated retro-reversing and bare-metal firmware analysis using PyGhidra."
+readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+    "Topic :: System :: Emulators",
+]
 dependencies = [
     "mcp>=1.0.0",
     "pyhidra>=2.0.0",
     "typing-extensions>=4.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/getanirao/ghidra-retro-mcp"
+"MCP Registry" = "https://registry.modelcontextprotocol.io"
 
 [project.scripts]
 ghidra-retro-mcp = "ghidra_retro_mcp.server:main"
