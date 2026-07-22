@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import logging
 import uuid
@@ -76,7 +77,13 @@ class GhidraSession:
         kwargs = {}
         if self._ghidra_dir:
             kwargs["install_dir"] = self._ghidra_dir
-        _pyghidra.start(verbose=True, **kwargs)
+        # Suppress Java stdout noise that would break MCP JSON-RPC
+        old_stdout = sys.stdout
+        sys.stdout = sys.stderr
+        try:
+            _pyghidra.start(**kwargs)
+        finally:
+            sys.stdout = old_stdout
         logger.info("pyghidra started — importing Ghidra classes")
         global FunctionManager, CodeUnit, ReferenceManager, SourceType
         global StructureDataType, CategoryPath, ByteDataType, DecompInterface, ConsoleTaskMonitor
@@ -150,13 +157,18 @@ class GhidraSession:
         project_dir = Path(project_dir or binary_path.parent).resolve()
         project_name = f"_{binary_path.stem}_mcp_{int(time.time())}"
 
-        gen = _pyghidra.open_program(
-            binary_path=str(binary_path),
-            project_location=str(project_dir),
-            project_name=project_name,
-            analyze=True,
-        )
-        flat_api = next(gen)
+        old_stdout = sys.stdout
+        sys.stdout = sys.stderr
+        try:
+            gen = _pyghidra.open_program(
+                binary_path=str(binary_path),
+                project_location=str(project_dir),
+                project_name=project_name,
+                analyze=True,
+            )
+            flat_api = next(gen)
+        finally:
+            sys.stdout = old_stdout
         program = flat_api.program
 
         info = SessionInfo(
@@ -900,8 +912,13 @@ class GhidraSession:
         if lang_id != "Auto-Detect":
             kwargs["language"] = lang_id
 
-        gen = _pyghidra.open_program(**kwargs)
-        flat_api = next(gen)
+        old_stdout = sys.stdout
+        sys.stdout = sys.stderr
+        try:
+            gen = _pyghidra.open_program(**kwargs)
+            flat_api = next(gen)
+        finally:
+            sys.stdout = old_stdout
         program = flat_api.program
 
         info = SessionInfo(
