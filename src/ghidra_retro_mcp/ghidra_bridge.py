@@ -1,3 +1,4 @@
+import os
 import time
 import logging
 import uuid
@@ -10,17 +11,14 @@ logger = logging.getLogger(__name__)
 
 try:
     import pyhidra
-    from ghidra.program.model.listing import FunctionManager, CodeUnit
-    from ghidra.program.model.symbol import ReferenceManager, SourceType
-    from ghidra.program.model.data import StructureDataType, CategoryPath, ByteDataType
-    from ghidra.app.decompiler import DecompInterface
-    from ghidra.util.task import ConsoleTaskMonitor
-    _HAS_GHIDRA = True
 except ImportError:
     pyhidra = None
-    FunctionManager = CodeUnit = ReferenceManager = SourceType = None
-    StructureDataType = CategoryPath = ByteDataType = DecompInterface = ConsoleTaskMonitor = None
-    _HAS_GHIDRA = False
+
+# Ghidra Java classes — importable only after pyhidra.start() initializes the JVM
+FunctionManager = CodeUnit = ReferenceManager = SourceType = None
+StructureDataType = CategoryPath = ByteDataType = DecompInterface = ConsoleTaskMonitor = None
+_HAS_GHIDRA = False
+_HAS_PYHIDRA = pyhidra is not None
 
 
 _SIMPLE_TYPES = {
@@ -63,22 +61,36 @@ class GhidraSession:
         self._ghidra_dir = ghidra_dir
         self._sessions: dict[str, SessionInfo] = {}
         self._active_session_id: Optional[str] = None
+        self._started = False
 
     def start(self):
-        if not _HAS_GHIDRA:
+        if self._started:
+            return
+        if not _HAS_PYHIDRA:
             raise RuntimeError(
-                "pyhidra/Ghidra not found. Install with: pip install ghidra-retro-mcp[ghidra]"
+                "pyhidra not found. Install with: pip install ghidra-retro-mcp[ghidra]"
             )
-        kwargs = {}
         if self._ghidra_dir:
-            kwargs["ghidra_dir"] = self._ghidra_dir
-        pyhidra.start(verbose=True, **kwargs)
-        logger.info("pyhidra started")
+            os.environ["GHIDRA_INSTALL_DIR"] = self._ghidra_dir
+        pyhidra.start(verbose=True)
+        logger.info("pyhidra started — importing Ghidra classes")
+        global FunctionManager, CodeUnit, ReferenceManager, SourceType
+        global StructureDataType, CategoryPath, ByteDataType, DecompInterface, ConsoleTaskMonitor
+        global _HAS_GHIDRA
+        from ghidra.program.model.listing import FunctionManager, CodeUnit
+        from ghidra.program.model.symbol import ReferenceManager, SourceType
+        from ghidra.program.model.data import StructureDataType, CategoryPath, ByteDataType
+        from ghidra.app.decompiler import DecompInterface
+        from ghidra.util.task import ConsoleTaskMonitor
+        _HAS_GHIDRA = True
+        self._started = True
+        logger.info("Ghidra classes imported")
 
     def _make_session_id(self) -> str:
         return uuid.uuid4().hex[:12]
 
     def _require_session(self, session_id: Optional[str] = None) -> SessionInfo:
+        self.start()
         sid = session_id or self._active_session_id
         if sid is None or sid not in self._sessions:
             raise RuntimeError(

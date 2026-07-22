@@ -624,8 +624,11 @@ def main():
         session._ghidra_dir = args.ghidra_dir
 
     logger.info("Starting Ghidra headless MCP server...")
-    session.start()
-    logger.info("Ghidra bridge ready")
+    try:
+        session.start()
+        logger.info("Ghidra bridge ready")
+    except RuntimeError as e:
+        logger.warning("Ghidra not available at startup: %s — will activate on first tool call", e)
 
     import asyncio
     asyncio.run(serve())
