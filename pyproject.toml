@@ -18,9 +18,9 @@ classifiers = [
 ]
 dependencies = [
     "mcp>=1.0.0",
-    "pyhidra>=2.0.0",
-    "typing-extensions>=4.0.0",
 ]
+[project.optional-dependencies]
+ghidra = ["pyhidra>=1.0"]
 
 [project.urls]
 Homepage = "https://github.com/getanirao/ghidra-retro-mcp"

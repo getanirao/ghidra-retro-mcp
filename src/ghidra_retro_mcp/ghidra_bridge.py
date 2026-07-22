@@ -6,15 +6,21 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-import pyhidra
-
-from ghidra.program.model.listing import FunctionManager, CodeUnit
-from ghidra.program.model.symbol import ReferenceManager, SourceType
-from ghidra.program.model.data import StructureDataType, CategoryPath, ByteDataType
-from ghidra.app.decompiler import DecompInterface
-from ghidra.util.task import ConsoleTaskMonitor
-
 logger = logging.getLogger(__name__)
+
+try:
+    import pyhidra
+    from ghidra.program.model.listing import FunctionManager, CodeUnit
+    from ghidra.program.model.symbol import ReferenceManager, SourceType
+    from ghidra.program.model.data import StructureDataType, CategoryPath, ByteDataType
+    from ghidra.app.decompiler import DecompInterface
+    from ghidra.util.task import ConsoleTaskMonitor
+    _HAS_GHIDRA = True
+except ImportError:
+    pyhidra = None
+    FunctionManager = CodeUnit = ReferenceManager = SourceType = None
+    StructureDataType = CategoryPath = ByteDataType = DecompInterface = ConsoleTaskMonitor = None
+    _HAS_GHIDRA = False
 
 
 _SIMPLE_TYPES = {
@@ -59,6 +65,10 @@ class GhidraSession:
         self._active_session_id: Optional[str] = None
 
     def start(self):
+        if not _HAS_GHIDRA:
+            raise RuntimeError(
+                "pyhidra/Ghidra not found. Install with: pip install ghidra-retro-mcp[ghidra]"
+            )
         kwargs = {}
         if self._ghidra_dir:
             kwargs["ghidra_dir"] = self._ghidra_dir
