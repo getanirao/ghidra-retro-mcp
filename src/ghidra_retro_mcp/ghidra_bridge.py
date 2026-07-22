@@ -919,8 +919,6 @@ class GhidraSession:
             flat_api = cm.__enter__()
         finally:
             sys.stdout = old_stdout
-        program = flat_api.program
-
         program = flat_api.getCurrentProgram()
         info = SessionInfo(
             session_id=sid,
