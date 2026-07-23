@@ -630,7 +630,7 @@ class GhidraSession:
                 label = data_at.getDefaultValueRepresentation()
             results.append({
                 "address": str(found),
-                "context": _get_bytes(program, found, raw_bytes.length),
+                "context": _get_bytes(program, found, len(raw_bytes)),
                 "label": label[:80] if label else "",
             })
             hits += 1
