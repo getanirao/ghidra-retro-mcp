@@ -40,18 +40,13 @@ def build_workspace_report(program) -> str:
             pass
 
     # ── Entry-point summary ──────────────────────────────────────────
-    entry_addrs = []
-    from ghidra.program.model.symbol import SymbolType
-    it = sym_table.getSymbols(SymbolType.ENTRY_POINT)
-    while it.hasNext():
-        entry_addrs.append(it.next().getAddress())
     entry_lines = []
-    for ea in entry_addrs:
-        func = fm.getFunctionAt(ea)
-        if func:
-            entry_lines.append(f"- `{ea}` → **{func.getName()}**")
-        else:
-            entry_lines.append(f"- `{ea}`")
+    try:
+        fmt, md5 = program.getExecutableFormat(), program.getExecutableMD5()
+        entry_lines.append(f"- **Format:** `{fmt}`")
+        entry_lines.append(f"- **MD5:** `{md5}`")
+    except Exception:
+        pass
 
     # ── Function overview ────────────────────────────────────────────
     total_funcs = 0
