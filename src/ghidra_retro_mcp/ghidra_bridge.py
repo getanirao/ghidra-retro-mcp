@@ -204,7 +204,6 @@ class GhidraSession:
     ) -> dict:
         info = self._require_session(session_id)
         program = info.program
-        listing = program.getListing()
         func = _find_function(program, function_name)
         if func is None:
             raise ValueError(f"Function '{function_name}' not found")
@@ -228,7 +227,6 @@ class GhidraSession:
     ) -> dict:
         info = self._require_session(session_id)
         program = info.program
-        listing = program.getListing()
         func = _find_function(program, function_name)
         if func is None:
             raise ValueError(f"Function '{function_name}' not found")
@@ -332,7 +330,6 @@ class GhidraSession:
         self, function_name: str, max_depth: int = 3, session_id: Optional[str] = None
     ) -> dict:
         info = self._require_session(session_id)
-        listing = info.program.getListing()
         func = _find_function(program, function_name)
         if func is None:
             raise ValueError(f"Function '{function_name}' not found")
@@ -809,7 +806,6 @@ class GhidraSession:
         from .tools.signatures import fingerprint_function
 
         info = self._require_session(session_id)
-        listing = info.program.getListing()
         func = _find_function(program, func_name)
         if func is None:
             raise ValueError(f"Function '{func_name}' not found")
@@ -956,6 +952,11 @@ class GhidraSession:
 def _find_function(program, name_or_addr: str):
     fm = program.getFunctionManager()
     addr = program.getAddressFactory().getAddress(name_or_addr)
+    if addr is not None:
+        func = fm.getFunctionAt(addr)
+        if func is not None:
+            return func
+    for f in fm.getFunctions(True):
         if f.getName() == name_or_addr:
             return f
     return None
