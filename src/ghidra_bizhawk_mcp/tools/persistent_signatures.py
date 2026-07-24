@@ -8,7 +8,7 @@ from .signatures import export_signature_map, apply_signature_map
 
 logger = logging.getLogger(__name__)
 
-CACHE_DIR = os.path.join(os.path.expanduser("~"), ".ghidra_retro_mcp", "signatures")
+CACHE_DIR = os.path.join(os.path.expanduser("~"), ".ghidra_bizhawk_mcp", "signatures")
 
 
 def _ensure_cache():

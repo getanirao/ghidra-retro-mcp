@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ghidra-retro-mcp"
+name = "ghidra-bizhawk-mcp"
 version = "1.0.0"
-description = "A secure, headless Model Context Protocol (MCP) server for automated retro-reversing and bare-metal firmware analysis using PyGhidra."
+description = "A unified Model Context Protocol (MCP) server bridging Ghidra's static analysis with BizHawk's live emulation for retro-reversing and bare-metal firmware analysis."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
@@ -23,11 +23,11 @@ dependencies = [
 ghidra = ["pyghidra>=3.0"]
 
 [project.urls]
-Homepage = "https://github.com/getanirao/ghidra-retro-mcp"
-"MCP Registry" = "https://registry.modelcontextprotocol.io"
+Homepage = "https://github.com/getanirao/ghidra-bizhawk-mcp"
 
 [project.scripts]
-ghidra-retro-mcp = "ghidra_retro_mcp.server:main"
+ghidra-bizhawk-mcp = "ghidra_bizhawk_mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["ghidra_bizhawk_mcp*"]

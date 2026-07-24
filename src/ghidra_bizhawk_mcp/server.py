@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import logging
 import os
 import sys
@@ -9,6 +10,7 @@ import mcp.server.stdio
 import mcp.types as types
 
 from .ghidra_bridge import GhidraSession
+from .tools.bizhawk_bridge import get_bridge
 
 logger = logging.getLogger(__name__)
 
@@ -392,7 +394,7 @@ TOOLS = [
     ),
     types.Tool(
         name="list_stashed_signature_groups",
-        description="List all stashed signature groups currently in the local server cache (~/.ghidra_retro_mcp/signatures/).",
+        description="List all stashed signature groups currently in the local server cache (~/.ghidra_bizhawk_mcp/signatures/).",
         inputSchema={"type": "object", "properties": {}},
     ),
     # ── Retro platform triage ───────────────────────────────────────────
@@ -408,11 +410,128 @@ TOOLS = [
             "required": ["rom_path"],
         },
     ),
+    # ── BizHawk live emulation ──────────────────────────────────────────
+    types.Tool(
+        name="bizhawk_connect",
+        description="Check connectivity to BizHawk (ping bridge.lua running inside EmuHawk).",
+        inputSchema={"type": "object", "properties": {}},
+    ),
+    types.Tool(
+        name="bizhawk_get_info",
+        description="Get ROM name, ROM hash, framecount, memory domains, and capabilities from BizHawk.",
+        inputSchema={"type": "object", "properties": {}},
+    ),
+    types.Tool(
+        name="bizhawk_list_memory_domains",
+        description="List available memory domains for the loaded core.",
+        inputSchema={"type": "object", "properties": {}},
+    ),
+    types.Tool(
+        name="bizhawk_read_memory",
+        description="Read bytes from BizHawk emulated memory. Returns an array of byte values.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "address": {"type": "integer", "description": "Starting memory address (decimal or hex)"},
+                "size": {"type": "integer", "default": 4, "description": "Number of bytes to read (max 4096)"},
+                "domain": {"type": "string", "description": "Optional memory domain (e.g. WRAM, RAM, EWRAM, VRAM). Use bizhawk_list_memory_domains to discover names."},
+            },
+            "required": ["address"],
+        },
+    ),
+    types.Tool(
+        name="bizhawk_write_memory",
+        description="Write bytes to BizHawk emulated memory.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "address": {"type": "integer", "description": "Starting memory address"},
+                "data": {"type": "array", "items": {"type": "integer"}, "description": "Array of byte values to write (max 4096)"},
+                "domain": {"type": "string", "description": "Optional memory domain"},
+            },
+            "required": ["address", "data"],
+        },
+    ),
+    types.Tool(
+        name="bizhawk_press_buttons",
+        description="Set joypad button state for a player. Buttons is an object like {A: true, B: true, Up: true, Start: true, Select: true}. Runs once; hold buttons across frames by repeating.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "buttons": {
+                    "type": "object",
+                    "description": "Button states as {ButtonName: true/false, ...}",
+                    "additionalProperties": {"type": "boolean"},
+                },
+                "player": {"type": "integer", "default": 1, "description": "Player number (1-based)"},
+            },
+            "required": ["buttons"],
+        },
+    ),
+    types.Tool(
+        name="bizhawk_frame_advance",
+        description="Advance the emulator by N frames. Use to step through execution or apply button inputs.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "count": {"type": "integer", "default": 1, "description": "Number of frames to advance"},
+            },
+        },
+    ),
+    types.Tool(
+        name="bizhawk_pause",
+        description="Pause emulation.",
+        inputSchema={"type": "object", "properties": {}},
+    ),
+    types.Tool(
+        name="bizhawk_unpause",
+        description="Unpause emulation.",
+        inputSchema={"type": "object", "properties": {}},
+    ),
+    types.Tool(
+        name="bizhawk_reset",
+        description="Reset the loaded core (reboot the emulated system).",
+        inputSchema={"type": "object", "properties": {}},
+    ),
+    types.Tool(
+        name="bizhawk_screenshot",
+        description="Save a PNG screenshot of the current display to a file path.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Absolute file path to save the PNG screenshot (e.g. C:/temp/shot.png)"},
+            },
+            "required": ["path"],
+        },
+    ),
+    types.Tool(
+        name="bizhawk_save_state",
+        description="Save emulator state to a file.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "File path for the savestate (e.g. C:/temp/state.bin)"},
+            },
+            "required": ["path"],
+        },
+    ),
+    types.Tool(
+        name="bizhawk_load_state",
+        description="Load emulator state from a file.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "File path of the savestate to load"},
+            },
+            "required": ["path"],
+        },
+    ),
 ]
 
 
 async def serve():
-    server = Server("ghidra-retro-mcp")
+    await get_bridge().start()
+    server = Server("ghidra-bizhawk-mcp")
 
     @server.list_tools()
     async def list_tools() -> list[types.Tool]:
@@ -421,7 +540,7 @@ async def serve():
     @server.call_tool()
     async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
         try:
-            result = _dispatch(name, arguments)
+            result = await _dispatch(name, arguments)
             return [types.TextContent(type="text", text=_format_result(result))]
         except Exception as e:
             logger.exception("Tool call failed")
@@ -432,7 +551,7 @@ async def serve():
             read_stream,
             write_stream,
             InitializationOptions(
-                server_name="ghidra-retro-mcp",
+                server_name="ghidra-bizhawk-mcp",
                 server_version="0.1.0",
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
@@ -442,7 +561,7 @@ async def serve():
         )
 
 
-def _dispatch(name: str, args: dict):
+async def _dispatch(name: str, args: dict):
     sid = args.get("session_id")
 
     # Session management
@@ -593,6 +712,82 @@ def _dispatch(name: str, args: dict):
             session_id=args.get("session_id"),
         )
 
+    # ── BizHawk live emulation ──────────────────────────────────────────
+    bridge = get_bridge()
+
+    if name == "bizhawk_connect":
+        result = await bridge.send_command("ping")
+        return {"status": "connected", "result": result}
+
+    if name == "bizhawk_get_info":
+        return await bridge.send_command("get_info")
+
+    if name == "bizhawk_list_memory_domains":
+        return await bridge.send_command("list_memory_domains")
+
+    if name == "bizhawk_read_memory":
+        address = args["address"]
+        size = args.get("size", 4)
+        domain = args.get("domain")
+        result = await bridge.send_command("read_range", {
+            "address": address,
+            "length": size,
+            "domain": domain,
+        })
+        return {"address": address, "size": size, "domain": domain, "bytes": result}
+
+    if name == "bizhawk_write_memory":
+        address = args["address"]
+        data = args["data"]
+        domain = args.get("domain")
+        result = await bridge.send_command("write_range", {
+            "address": address,
+            "bytes": data,
+            "domain": domain,
+        })
+        return {"address": address, "written": result["written"], "domain": domain}
+
+    if name == "bizhawk_press_buttons":
+        buttons = args["buttons"]
+        player = args.get("player", 1)
+        await bridge.send_command("press_buttons", {
+            "buttons": buttons,
+            "player": player,
+        })
+        return {"buttons": buttons, "player": player}
+
+    if name == "bizhawk_frame_advance":
+        count = args.get("count", 1)
+        framecount = await bridge.send_command("frame_advance", {"count": count})
+        return {"frames_advanced": count, "framecount": framecount}
+
+    if name == "bizhawk_pause":
+        await bridge.send_command("pause")
+        return {"status": "paused"}
+
+    if name == "bizhawk_unpause":
+        await bridge.send_command("unpause")
+        return {"status": "unpaused"}
+
+    if name == "bizhawk_reset":
+        await bridge.send_command("reset")
+        return {"status": "reset"}
+
+    if name == "bizhawk_screenshot":
+        path = args["path"]
+        result = await bridge.send_command("screenshot", {"path": path})
+        return {"path": result["path"]}
+
+    if name == "bizhawk_save_state":
+        path = args["path"]
+        result = await bridge.send_command("save_state", {"path": path})
+        return {"path": result["path"]}
+
+    if name == "bizhawk_load_state":
+        path = args["path"]
+        result = await bridge.send_command("load_state", {"path": path})
+        return {"path": result["path"]}
+
     raise ValueError(f"Unknown tool: {name}")
 
 
@@ -620,10 +815,9 @@ def main():
         session._ghidra_dir = args.ghidra_dir
 
     logger.info("Starting Ghidra headless MCP server...")
+    logger.info("Booting JVM (this may take 30-60 seconds)...")
     session.start()
-    logger.info("Ghidra bridge ready")
-
-    import asyncio
+    logger.info("JVM ready, starting MCP server...")
     asyncio.run(serve())
 
 

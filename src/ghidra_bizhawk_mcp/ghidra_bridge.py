@@ -76,7 +76,7 @@ class GhidraSession:
             return
         if not _HAS_PYGHIDRA:
             raise RuntimeError(
-                "pyghidra not found. Install with: pip install ghidra-retro-mcp[ghidra]"
+                "pyghidra not found. Install with: pip install ghidra-bizhawk-mcp[ghidra]"
             )
         kwargs = {}
         if self._ghidra_dir:
@@ -162,7 +162,7 @@ class GhidraSession:
         if sid in self._sessions:
             self.close_session(sid)
 
-        project_dir = tempfile.mkdtemp(prefix="ghidra_retro_")
+        project_dir = tempfile.mkdtemp(prefix="ghidra_bizhawk_")
         project_name = f"_{binary_path.stem}_mcp_{int(time.time())}"
 
         old_stdout = sys.stdout
@@ -903,7 +903,7 @@ class GhidraSession:
         if sid in self._sessions:
             self.close_session(sid)
 
-        project_dir = tempfile.mkdtemp(prefix="ghidra_retro_")
+        project_dir = tempfile.mkdtemp(prefix="ghidra_bizhawk_")
         short = platform_name.split()[0].lower().replace("/", "_")
         project_name = f"_{rom_path.stem}_{short}_{int(time.time())}"
 

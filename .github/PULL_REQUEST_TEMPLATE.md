@@ -59,14 +59,14 @@ Closes #<!-- issue number if applicable -->
 
 ## Docker verification
 
-- [ ] `docker build -t ghidra-retro-mcp .` succeeds
-- [ ] Container starts with `docker run -i --rm ghidra-retro-mcp`
+- [ ] `docker build -t ghidra-bizhawk-mcp .` succeeds
+- [ ] Container starts with `docker run -i --rm ghidra-bizhawk-mcp`
 
 ---
 
 ## Checklist
 
-- [ ] Python syntax passes: `python -m py_compile src/ghidra_retro_mcp/...`
+- [ ] Python syntax passes: `python -m py_compile src/ghidra_bizhawk_mcp/...`
 - [ ] No stale references to old package or tool names
 - [ ] README updated if user-facing behaviour changed
 - [ ] PR targets `main` branch

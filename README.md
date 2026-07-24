@@ -1,6 +1,6 @@
-# Ghidra Retro MCP
+# Ghidra BizHawk MCP
 
-MCP (Model Context Protocol) server that exposes Ghidra's headless analysis capabilities to AI assistants via pyhidra.
+A unified MCP (Model Context Protocol) server bridging Ghidra's headless static analysis with BizHawk's live emulation — switch between decompiling a ROM and running it on real hardware in the same session.
 
 > **GBA ROMs**: If analyzing Game Boy Advance ROMs, install [pudii/gba-ghidra-loader](https://github.com/pudii/gba-ghidra-loader) in your Ghidra installation for proper ROM header parsing, mirrored memory regions, and I/O register maps. The loader repository has pre-built `.gpa` files for Ghidra 11.x.
 
@@ -10,7 +10,7 @@ This server communicates **exclusively over standard process stdio** — there i
 
 ## Hardware & Retro Ecosystem Integration
 
-`ghidra-retro-mcp` includes native out-of-the-box support for retro-reversing automation pipelines. The server container bundles pre-compiled execution dependencies for:
+`ghidra-bizhawk-mcp` includes native out-of-the-box support for retro-reversing automation pipelines via Ghidra's static analysis, plus live emulation via BizHawk's multi-system emulator. The server bundles:
 
 - **Nintendo Entertainment System (NES)** via `GhidraNes`
 - **Super Nintendo Entertainment System (SNES)** via native 65816 memory maps
@@ -63,14 +63,14 @@ Instead of forcing your AI agent to spend cycles manually identifying architectu
 ```bash
 pip install -e .
 set GHIDRA_INSTALL_DIR=C:\path\to\ghidra   # Windows
-ghidra-retro-mcp
+ghidra-bizhawk-mcp
 ```
 
 ### Docker
 
 ```bash
-docker build -t ghidra-retro-mcp .
-docker run -i --rm -v /path/to/binaries:/data ghidra-retro-mcp
+docker build -t ghidra-bizhawk-mcp .
+docker run -i --rm -v /path/to/binaries:/data ghidra-bizhawk-mcp
 ```
 
 The container bundles JDK 17, Ghidra 11.2, and the server — no host dependencies beyond Docker.
@@ -81,7 +81,7 @@ The container bundles JDK 17, Ghidra 11.2, and the server — no host dependenci
 {
   "mcpServers": {
     "ghidra-headless": {
-      "command": "ghidra-retro-mcp",
+      "command": "ghidra-bizhawk-mcp",
       "args": ["--ghidra-dir", "C:\\path\\to\\ghidra"],
       "env": {}
     }
@@ -162,12 +162,12 @@ diff_binaries(session_a=s1.session_id, session_b="my_session")
 ### Docker (multi-user / CI)
 
 ```bash
-docker build -t ghidra-retro-mcp .
+docker build -t ghidra-bizhawk-mcp .
 
 # Run as an MCP subprocess
 docker run -i --rm \
   -v /data/binaries:/data \
-  ghidra-retro-mcp \
+  ghidra-bizhawk-mcp \
   --ghidra-dir /opt/ghidra
 ```
 
@@ -234,7 +234,7 @@ This is especially powerful for identifying copy-loop bounds (`R3 >= R4`), null-
 
 | Tool | Description |
 |---|---|
-| `save_active_binary_signature` | Fingerprint all functions and stash the map under a `lineage_group_id` (e.g. `"my_firmware_v1"`). Stored in `~/.ghidra_retro_mcp/signatures/` — no JSON files to manage. |
+| `save_active_binary_signature` | Fingerprint all functions and stash the map under a `lineage_group_id` (e.g. `"my_firmware_v1"`). Stored in `~/.ghidra_bizhawk_mcp/signatures/` — no JSON files to manage. |
 | `auto_restore_signatures_from_stash` | Load a stashed map by `lineage_group_id` and auto-rename every matching function. |
 | `auto_stash_current_binary` | **Zero-input auto-stash** — hashes the binary's first 4 KB, saves a map under that hash. Just analyze and call. |
 | `auto_restore_current_binary` | **Zero-input auto-restore** — hashes the binary, looks up a previous stash, renames matches. No group ID needed. |
@@ -267,11 +267,11 @@ auto_restore_current_binary(session_id=s2.session_id)
 
 ```bash
 # Install
-pip install ghidra-retro-mcp
-# Requires Ghidra 11.2 + pyhidra; see Quick Start above.
+pip install ghidra-bizhawk-mcp
+# Requires Ghidra 12.x + pyghidra; see Quick Start above.
 
 # Start the server (stdio — pipe to an MCP client)
-ghidra-retro-mcp
+ghidra-bizhawk-mcp
 ```
 
 Configure Claude Desktop:
@@ -279,8 +279,8 @@ Configure Claude Desktop:
 ```json
 {
   "mcpServers": {
-    "ghidra-retro": {
-      "command": "ghidra-retro-mcp",
+    "ghidra-bizhawk": {
+      "command": "ghidra-bizhawk-mcp",
       "args": ["--ghidra-dir", "C:\\path\\to\\ghidra"],
       "env": {}
     }
@@ -297,16 +297,20 @@ Then ask Claude:
 ## Project Structure
 
 ```
-ghidra-retro-mcp/
+ghidra-bizhawk-mcp/
 ├── Dockerfile
 ├── pyproject.toml
 ├── README.md
-└── src/ghidra_retro_mcp/
+└── src/ghidra_bizhawk_mcp/
     ├── __init__.py
     ├── server.py          # MCP server, tool registry, stdio transport
-    ├── ghidra_bridge.py   # GhidraSession — pyhidra wrapper, all tool logic
+    ├── ghidra_bridge.py   # GhidraSession — pyghidra wrapper, all Ghidra logic
+    ├── lua/
+    │   └── bridge.lua     # BizHawk-side Lua bridge for live emulation
     └── tools/
-        └── __init__.py
+        ├── __init__.py
+        ├── bizhawk_bridge.py  # TCP server bridging MCP ↔ BizHawk
+        └── ...
 ```
 
 ## How it works
@@ -317,4 +321,4 @@ ghidra-retro-mcp/
 4. Write tools apply changes directly to the Ghidra program database
 5. Sessions persist until explicitly closed — enabling multi-binary workflows and diffing
 
-<!-- mcp-name: io.github.getanirao/ghidra-retro-mcp -->
+<!-- mcp-name: io.github.getanirao/ghidra-bizhawk-mcp -->
